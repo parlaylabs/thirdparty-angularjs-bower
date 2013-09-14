@@ -4662,55 +4662,56 @@ function $CompileProvider($provide) {
           attrsMap = attrs.$attr,
           match,
           className;
-
       switch(nodeType) {
         case 1: /* Element */
-          // use the node name: <directive>
-          addDirective(directives,
-              directiveNormalize(nodeName_(node).toLowerCase()), 'E', maxPriority, ignoreDirective);
+          if (!isUndefined(node.nodeName)) {
+            // use the node name: <directive>
+            addDirective(directives,
+                directiveNormalize(nodeName_(node).toLowerCase()), 'E', maxPriority, ignoreDirective);
 
-          // iterate over the attributes
-          for (var attr, name, nName, ngAttrName, value, nAttrs = node.attributes,
-                   j = 0, jj = nAttrs && nAttrs.length; j < jj; j++) {
-            var attrStartName;
-            var attrEndName;
-            var index;
+            // iterate over the attributes
+            for (var attr, name, nName, ngAttrName, value, nAttrs = node.attributes,
+                     j = 0, jj = nAttrs && nAttrs.length; j < jj; j++) {
+              var attrStartName;
+              var attrEndName;
+              var index;
 
-            attr = nAttrs[j];
-            if (!msie || msie >= 8 || attr.specified) {
-              name = attr.name;
-              // support ngAttr attribute binding
-              ngAttrName = directiveNormalize(name);
-              if (NG_ATTR_BINDING.test(ngAttrName)) {
-                name = ngAttrName.substr(6).toLowerCase();
+              attr = nAttrs[j];
+              if (!msie || msie >= 8 || attr.specified) {
+                name = attr.name;
+                // support ngAttr attribute binding
+                ngAttrName = directiveNormalize(name);
+                if (NG_ATTR_BINDING.test(ngAttrName)) {
+                  name = ngAttrName.substr(6).toLowerCase();
+                }
+                if ((index = ngAttrName.lastIndexOf('Start')) != -1 && index == ngAttrName.length - 5) {
+                  attrStartName = name;
+                  attrEndName = name.substr(0, name.length - 5) + 'end';
+                  name = name.substr(0, name.length - 6);
+                }
+                nName = directiveNormalize(name.toLowerCase());
+                attrsMap[nName] = name;
+                attrs[nName] = value = trim((msie && name == 'href')
+                  ? decodeURIComponent(node.getAttribute(name, 2))
+                  : attr.value);
+                if (getBooleanAttrName(node, nName)) {
+                  attrs[nName] = true; // presence means true
+                }
+                addAttrInterpolateDirective(node, directives, value, nName);
+                addDirective(directives, nName, 'A', maxPriority, ignoreDirective, attrStartName, attrEndName);
               }
-              if ((index = ngAttrName.lastIndexOf('Start')) != -1 && index == ngAttrName.length - 5) {
-                attrStartName = name;
-                attrEndName = name.substr(0, name.length - 5) + 'end';
-                name = name.substr(0, name.length - 6);
-              }
-              nName = directiveNormalize(name.toLowerCase());
-              attrsMap[nName] = name;
-              attrs[nName] = value = trim((msie && name == 'href')
-                ? decodeURIComponent(node.getAttribute(name, 2))
-                : attr.value);
-              if (getBooleanAttrName(node, nName)) {
-                attrs[nName] = true; // presence means true
-              }
-              addAttrInterpolateDirective(node, directives, value, nName);
-              addDirective(directives, nName, 'A', maxPriority, ignoreDirective, attrStartName, attrEndName);
             }
-          }
 
-          // use class as directive
-          className = node.className;
-          if (isString(className) && className !== '') {
-            while (match = CLASS_DIRECTIVE_REGEXP.exec(className)) {
-              nName = directiveNormalize(match[2]);
-              if (addDirective(directives, nName, 'C', maxPriority, ignoreDirective)) {
-                attrs[nName] = trim(match[3]);
+            // use class as directive
+            className = node.className;
+            if (isString(className) && className !== '') {
+              while (match = CLASS_DIRECTIVE_REGEXP.exec(className)) {
+                nName = directiveNormalize(match[2]);
+                if (addDirective(directives, nName, 'C', maxPriority, ignoreDirective)) {
+                  attrs[nName] = trim(match[3]);
+                }
+                className = className.substr(match.index + match[0].length);
               }
-              className = className.substr(match.index + match[0].length);
             }
           }
           break;
